@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #050d1a;
+  --bg-secondary: #0a1628;
+  --bg-card: #0d1f3c;
+  --accent-blue: #2563eb;
+  --accent-cyan: #38bdf8;
+  --accent-teal: #0d9488;
+  --infected-red: #ef4444;
+  --healthy-green: #22c55e;
+  --text-primary: #f0f4ff;
+  --text-muted: #7b91b0;
+  --border-glow: rgba(56, 189, 248, 0.2);
+  --grain-dot: rgba(56, 189, 248, 0.03);
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--bg-primary);
+}
+
+body {
+  margin: 0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Hanken Grotesque', sans-serif;
+  overflow-x: hidden;
+}
+
+body::before {
+  animation: grainShift 8s steps(10) infinite;
+  background-image:
+    radial-gradient(var(--grain-dot) 1px, transparent 1px),
+    radial-gradient(var(--border-glow) 1px, transparent 1px);
+  background-position: 0 0, 14px 18px;
+  background-size: 28px 28px, 46px 46px;
+  content: '';
+  inset: 0;
+  opacity: 0.7;
+  pointer-events: none;
+  position: fixed;
+  z-index: 0;
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+::selection {
+  background: var(--accent-cyan);
+  color: var(--bg-primary);
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent-cyan);
+  border-radius: 999px;
+}
+
+.page-fade {
+  animation: pageFade 300ms ease-out both;
+}
+
+.cell-blob {
+  animation: blobMorph 10s ease-in-out infinite;
+  background:
+    radial-gradient(circle at 34% 31%, rgba(240, 244, 255, 0.55), transparent 12%),
+    radial-gradient(circle at 66% 63%, rgba(56, 189, 248, 0.4), transparent 20%),
+    radial-gradient(circle at 50% 50%, var(--accent-blue) 0%, var(--accent-cyan) 52%, var(--accent-teal) 100%);
+  box-shadow: 0 0 70px var(--border-glow), inset 0 0 42px rgba(240, 244, 255, 0.16);
+}
+
+.mock-heatmap {
+  background: radial-gradient(circle at 50% 50%, var(--infected-red) 0%, var(--infected-red) 18%, var(--accent-cyan) 48%, var(--accent-blue) 78%);
+}
+
+.flow-line {
+  stroke-dasharray: 9 13;
+  animation: dashFlow 1.8s linear infinite;
+}
+
+@keyframes pageFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes grainShift {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(-28px, 28px);
+  }
+}
+
+@keyframes blobMorph {
+  0%,
+  100% {
+    border-radius: 53% 47% 61% 39% / 45% 55% 45% 55%;
+  }
+  50% {
+    border-radius: 39% 61% 42% 58% / 59% 39% 61% 41%;
+  }
+}
+
+@keyframes dashFlow {
+  to {
+    stroke-dashoffset: -44;
+  }
+}

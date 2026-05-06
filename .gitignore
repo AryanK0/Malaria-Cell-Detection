@@ -1,0 +1,11 @@
+dataset/
+node_modules/
+.history/
+env/
+venv/
+backend/env/
+frontend/node_modules/
+__pycache__/
+*.pyc
+.env
+.DS_Store
