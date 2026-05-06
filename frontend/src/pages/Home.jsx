@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import MetricCard from '../components/MetricCard'
 import PipelineStep from '../components/PipelineStep'
 import GradCamViewer from '../components/GradCamViewer'
+import { fallbackSamples, getRandomSamples, shuffleSamples } from '../lib/samples'
 
 const metrics = [
   { name: 'Validation Accuracy', value: 94.95, bar: 94.95, display: (n) => `${n.toFixed(2)}%` },
@@ -9,14 +11,19 @@ const metrics = [
   { name: 'Recall', value: 0.9702, bar: 97.02, display: (n) => n.toFixed(4), caption: 'Prioritized because missed infections are the risky error case.' },
 ]
 
-const sampleCells = [
-  { src: '/samples/para_1.png', label: 'Parasitized' },
-  { src: '/samples/uninf_1.png', label: 'Uninfected' },
-  { src: '/samples/para_2.png', label: 'Parasitized' },
-  { src: '/samples/uninf_2.png', label: 'Uninfected' },
-]
-
 export default function Home() {
+  const [sampleCells, setSampleCells] = useState(() => shuffleSamples(fallbackSamples, 4))
+
+  useEffect(() => {
+    let active = true
+    getRandomSamples(4).then((nextSamples) => {
+      if (active) setSampleCells(nextSamples)
+    })
+    return () => {
+      active = false
+    }
+  }, [])
+
   return (
     <>
       <section className="px-5 py-24 lg:px-8">
@@ -39,13 +46,13 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="glass-card rounded-2xl p-5">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="sample-showcase glass-card rounded-2xl p-4">
+            <div className="grid grid-cols-2 gap-3">
               {sampleCells.map((cell) => (
-                <figure key={`${cell.src}-${cell.label}`} className="rounded-xl border border-cyan-900/30 bg-black/30 p-3">
-                  <img src={cell.src} alt={`${cell.label} dataset sample`} className="aspect-square w-full rounded-lg object-contain" loading="lazy" decoding="async" />
+                <figure key={`${cell.src}-${cell.name}`} className="sample-tile rounded-xl border border-cyan-900/30 p-2">
+                  <img src={cell.src} alt={`${cell.expected} dataset sample`} className="aspect-square w-full rounded-lg object-contain" loading="lazy" decoding="async" />
                   <figcaption className="mt-3 text-center text-xs font-bold uppercase tracking-widest text-slate-400">
-                    {cell.label}
+                    {cell.expected}
                   </figcaption>
                 </figure>
               ))}

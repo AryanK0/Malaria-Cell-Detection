@@ -6,14 +6,28 @@ import base64
 from io import BytesIO
 import json
 import os
+import random
 import time
 import urllib.error
 import urllib.request
 
-import cv2
 import numpy as np
 from PIL import Image
-import tensorflow as tf
+
+try:
+    from .lite_model import LiteMalariaModel
+except ImportError:
+    from lite_model import LiteMalariaModel
+
+try:
+    import cv2
+except ImportError:
+    cv2 = None
+
+try:
+    import tensorflow as tf
+except ImportError:
+    tf = None
 
 app = FastAPI(title="Malaria Cell Detection")
 
@@ -37,6 +51,11 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "model", "best_model.h5")
 IMG_SIZE = (128, 128)
 RESAMPLE_BILINEAR = getattr(Image, "Resampling", Image).BILINEAR
+SAMPLE_DIRS = (
+    os.path.join(os.path.dirname(BASE_DIR), "frontend", "public", "samples"),
+    os.path.join(os.path.dirname(BASE_DIR), "frontend", "dist", "samples"),
+)
+SAMPLE_EXTENSIONS = {".png", ".jpg", ".jpeg"}
 
 
 def read_setting(name, default=""):
@@ -74,12 +93,16 @@ GEMINI_TIMEOUT = float(read_setting("GEMINI_TIMEOUT", "4"))
 
 model = None
 gradcam_model = None
+lite_model = None
 
 
 @app.on_event("startup")
 def load_model():
-    global model, gradcam_model
-    if os.path.exists(MODEL_PATH):
+    global model, gradcam_model, lite_model
+    if not os.path.exists(MODEL_PATH):
+        return
+
+    if tf is not None and not os.getenv("VERCEL"):
         model = tf.keras.models.load_model(MODEL_PATH, compile=False)
         conv_layers = [layer.name for layer in model.layers if isinstance(layer, tf.keras.layers.Conv2D)]
         if conv_layers:
@@ -89,6 +112,9 @@ def load_model():
             )
         dummy = np.zeros((1, IMG_SIZE[1], IMG_SIZE[0], 3), dtype=np.float32)
         model(tf.convert_to_tensor(dummy), training=False)
+        return
+
+    lite_model = LiteMalariaModel(MODEL_PATH)
 
 
 def encode_png(image_array):
@@ -99,12 +125,14 @@ def encode_png(image_array):
 
 
 def predict_uninfected_probability(input_batch):
+    if model is None:
+        raise RuntimeError("TensorFlow model is not loaded.")
     prediction = model(tf.convert_to_tensor(input_batch), training=False).numpy()
     return float(prediction[0][0])
 
 
 def build_gradcam(input_batch, original_resized, predicted_label):
-    if gradcam_model is None:
+    if gradcam_model is None or tf is None or cv2 is None:
         return original_resized
 
     with tf.GradientTape() as tape:
@@ -242,14 +270,24 @@ def analyze_image_bytes(raw):
     image_resized = pil_image.resize(IMG_SIZE, RESAMPLE_BILINEAR)
     original_resized = np.array(image_resized)
     input_array = original_resized.astype(np.float32) / 255.0
-    input_batch = np.expand_dims(input_array, axis=0)
 
-    probability_uninfected = predict_uninfected_probability(input_batch)
+    if model is not None:
+        input_batch = np.expand_dims(input_array, axis=0)
+        probability_uninfected = predict_uninfected_probability(input_batch)
+        probability_parasitized = 1 - probability_uninfected
+        label = "Uninfected" if probability_uninfected >= 0.5 else "Parasitized"
+        gradcam_overlay = build_gradcam(input_batch, original_resized, label)
+    elif lite_model is not None:
+        probability_uninfected, features = lite_model.predict(input_array)
+        probability_parasitized = 1 - probability_uninfected
+        label = "Uninfected" if probability_uninfected >= 0.5 else "Parasitized"
+        gradcam_overlay = lite_model.build_overlay(original_resized, features)
+    else:
+        raise RuntimeError("Model is not loaded.")
+
     probability_parasitized = 1 - probability_uninfected
-    label = "Uninfected" if probability_uninfected >= 0.5 else "Parasitized"
     confidence = max(probability_uninfected, probability_parasitized)
 
-    gradcam_overlay = build_gradcam(input_batch, original_resized, label)
     ai_insight = {
         "source": "local",
         "text": local_interpretation(label, confidence, probability_parasitized, probability_uninfected),
@@ -270,6 +308,35 @@ def analyze_image_bytes(raw):
     }
 
 
+def sample_label(filename):
+    lower = filename.lower()
+    if "para" in lower:
+        return "Parasitized"
+    if "uninf" in lower or "healthy" in lower:
+        return "Uninfected"
+    return "Cell"
+
+
+def list_public_samples(limit=4):
+    samples_by_name = {}
+    for sample_dir in SAMPLE_DIRS:
+        if not os.path.isdir(sample_dir):
+            continue
+        for filename in os.listdir(sample_dir):
+            stem, extension = os.path.splitext(filename)
+            if extension.lower() not in SAMPLE_EXTENSIONS:
+                continue
+            samples_by_name[filename] = {
+                "name": stem.replace("_", " ").title(),
+                "src": f"/samples/{filename}",
+                "expected": sample_label(filename),
+            }
+
+    samples = list(samples_by_name.values())
+    random.shuffle(samples)
+    return samples[: max(1, min(limit, len(samples)))]
+
+
 @app.get("/")
 def home():
     return {"message": "Malaria Detection is running"}
@@ -278,15 +345,21 @@ def home():
 def health():
     return {
         "status": "ok",
-        "model_loaded": model is not None,
+        "model_loaded": model is not None or lite_model is not None,
+        "runtime": "tensorflow" if model is not None else "lite" if lite_model is not None else "none",
         "gemini_enabled": bool(GEMINI_API_KEY),
         "gemini_model": GEMINI_MODEL if GEMINI_API_KEY else None,
     }
 
 
+@app.get("/samples")
+def samples(limit: int = 4):
+    return {"samples": list_public_samples(limit)}
+
+
 @app.post("/predict")
 async def predict(image: UploadFile = File(...)):
-    if model is None:
+    if model is None and lite_model is None:
         raise HTTPException(status_code=503, detail="Model not loaded. Copy best_model.h5 into backend/model/")
 
     if image.content_type not in {"image/png", "image/jpeg"}:

@@ -1,0 +1,16 @@
+.git
+.history
+.codex-temp
+dataset
+node_modules
+frontend/node_modules
+env
+venv
+backend/env
+__pycache__
+**/__pycache__
+**/*.pyc
+.env
+backend/.env
+final.ipynb
+best_model.h5

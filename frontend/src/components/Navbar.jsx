@@ -49,7 +49,7 @@ export default function Navbar() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
         <Link to="/" className="flex items-center gap-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400">
           <DnaIcon />
-          <span className="text-2xl font-black tracking-tight text-slate-100">Malaria Cell AI</span>
+          <span className="text-2xl font-black tracking-tight text-slate-100">Malaria Cell Detection</span>
         </Link>
 
         <div className="hidden items-center gap-9 md:flex">

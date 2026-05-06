@@ -9,7 +9,7 @@ import About from './pages/About'
 function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-navy-950 font-hanken text-slate-100">
+      <div className="site-shell min-h-screen font-hanken text-slate-100">
         <Navbar />
         <main className="page-fade">
           <Routes>

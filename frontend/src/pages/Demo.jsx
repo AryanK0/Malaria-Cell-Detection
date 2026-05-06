@@ -1,13 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || `http://${window.location.hostname || '127.0.0.1'}:5000`
-
-const samples = [
-  { name: 'Parasitized 1', src: '/samples/para_1.png', expected: 'Parasitized' },
-  { name: 'Parasitized 2', src: '/samples/para_2.png', expected: 'Parasitized' },
-  { name: 'Uninfected 1', src: '/samples/uninf_1.png', expected: 'Uninfected' },
-  { name: 'Uninfected 2', src: '/samples/uninf_2.png', expected: 'Uninfected' },
-]
+import { API_BASE, fallbackSamples, getRandomSamples, shuffleSamples } from '../lib/samples'
 
 export default function Demo() {
   const [file, setFile] = useState(null)
@@ -17,6 +9,7 @@ export default function Demo() {
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
   const [backend, setBackend] = useState({ status: 'checking', modelLoaded: false, geminiEnabled: false })
+  const [samples, setSamples] = useState(() => shuffleSamples(fallbackSamples, 4))
 
   useEffect(() => {
     fetch(`${API_BASE}/health`)
@@ -29,6 +22,16 @@ export default function Demo() {
         })
       })
       .catch(() => setBackend({ status: 'offline', modelLoaded: false, geminiEnabled: false }))
+  }, [])
+
+  useEffect(() => {
+    let active = true
+    getRandomSamples(4).then((nextSamples) => {
+      if (active) setSamples(nextSamples)
+    })
+    return () => {
+      active = false
+    }
   }, [])
 
   const fileInfo = useMemo(() => {
@@ -177,7 +180,7 @@ export default function Demo() {
               <div className="mt-4 grid grid-cols-4 gap-3">
                 {samples.map((sample) => (
                   <button
-                    key={sample.name}
+                    key={`${sample.src}-${sample.name}`}
                     type="button"
                     onClick={() => loadSample(sample)}
                     className="sample-thumb rounded-xl border border-cyan-900/30 p-2 transition hover:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400"

@@ -1,6 +1,6 @@
 export default function PipelineStep({ number, icon, title, description }) {
   return (
-    <article className="relative rounded-2xl border border-cyan-900/30 bg-navy-900/70 p-5 backdrop-blur transition hover:-translate-y-1 hover:border-cyan-400/70">
+    <article className="glass-card relative rounded-2xl p-5 transition hover:-translate-y-1 hover:border-cyan-400/70">
       <div className="flex items-center justify-between gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-400 text-base font-black text-navy-950 shadow-lg shadow-cyan-400/20">
           {number}

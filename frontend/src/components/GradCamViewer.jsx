@@ -8,10 +8,10 @@ const evidence = [
 
 export default function GradCamViewer() {
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      <div className="glass-card rounded-2xl p-6">
+    <div className="grid gap-6 md:grid-cols-[0.82fr_1.18fr]">
+      <div className="compact-sample-card glass-card rounded-2xl p-5">
         <p className="text-sm font-bold uppercase tracking-widest text-cyan-400">Dataset Sample</p>
-        <div className="mt-5 rounded-xl border border-cyan-900/30 bg-black/35 p-4">
+        <div className="mt-4 rounded-xl border border-cyan-900/30 bg-black/35 p-3">
           <img src="/samples/para_1.png" alt="Parasitized cell sample" className="aspect-square w-full rounded-lg object-contain" loading="lazy" decoding="async" />
         </div>
         <Link to="/demo" className="mt-5 inline-flex rounded-full border border-cyan-400 px-5 py-2.5 text-sm font-black text-cyan-400 transition hover:bg-cyan-400/10 focus:outline-none focus:ring-2 focus:ring-cyan-400">
