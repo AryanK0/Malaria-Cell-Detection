@@ -1,11 +1,15 @@
 export default function PipelineStep({ number, icon, title, description }) {
   return (
-    <article className="relative rounded-2xl border border-cyan-900/30 bg-navy-900/70 p-6 text-center backdrop-blur transition hover:-translate-y-1 hover:border-cyan-400/70">
-      <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-cyan-400 text-lg font-black text-navy-950 shadow-lg shadow-cyan-400/20">
-        {number}
+    <article className="relative rounded-2xl border border-cyan-900/30 bg-navy-900/70 p-5 backdrop-blur transition hover:-translate-y-1 hover:border-cyan-400/70">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-400 text-base font-black text-navy-950 shadow-lg shadow-cyan-400/20">
+          {number}
+        </div>
+        <span className="rounded-full border border-cyan-900/50 px-3 py-1 text-xs font-black tracking-widest text-cyan-400">
+          {icon}
+        </span>
       </div>
-      <div className="mt-5 text-4xl" aria-hidden="true">{icon}</div>
-      <h3 className="mt-4 text-xl font-black text-slate-100">{title}</h3>
+      <h3 className="mt-5 text-xl font-black text-slate-100">{title}</h3>
       <p className="mt-3 text-sm leading-6 text-slate-400">{description}</p>
     </article>
   )

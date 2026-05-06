@@ -25,7 +25,16 @@ export default function Navbar() {
   const { pathname } = useLocation()
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 50)
+    let ticking = false
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      window.requestAnimationFrame(() => {
+        const next = window.scrollY > 50
+        setScrolled((current) => (current === next ? current : next))
+        ticking = false
+      })
+    }
     onScroll()
     window.addEventListener('scroll', onScroll)
     return () => window.removeEventListener('scroll', onScroll)
@@ -40,7 +49,7 @@ export default function Navbar() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
         <Link to="/" className="flex items-center gap-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400">
           <DnaIcon />
-          <span className="text-2xl font-black tracking-tight text-slate-100">MalariaAI</span>
+          <span className="text-2xl font-black tracking-tight text-slate-100">Malaria Cell AI</span>
         </Link>
 
         <div className="hidden items-center gap-9 md:flex">
@@ -64,7 +73,7 @@ export default function Navbar() {
           to="/demo"
           className="hidden rounded-full bg-cyan-400 px-5 py-2.5 text-sm font-black text-navy-950 shadow-lg shadow-cyan-400/20 transition hover:scale-105 hover:bg-blue-600 hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 md:inline-flex"
         >
-          Try Live Demo
+          Try Demo
         </Link>
 
         <button

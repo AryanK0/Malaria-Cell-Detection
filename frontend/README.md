@@ -1,6 +1,6 @@
-# MalariaAI Frontend
+# Malaria Cell AI Frontend
 
-React + Tailwind CSS interface for the UCS321 malaria cell detection project.
+React + Tailwind CSS interface for the malaria cell detection project.
 
 ## Run
 ```powershell

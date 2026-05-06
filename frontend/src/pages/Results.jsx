@@ -1,88 +1,134 @@
-import { useState } from 'react'
 import MetricCard from '../components/MetricCard'
 
 const datasetStats = [
-  ['27,558', 'Total Images'],
-  ['13,779', 'Parasitized'],
-  ['13,779', 'Uninfected'],
+  ['27,558', 'Total Images', 'Balanced NIH/Kaggle cell image dataset.'],
+  ['13,779', 'Parasitized', 'Images labeled as malaria-infected cells.'],
+  ['13,779', 'Uninfected', 'Images labeled as healthy cells.'],
 ]
 
-const rows = [
-  ['Accuracy', '97.8%', '95.2%'],
-  ['AUC', '0.994', '0.987'],
-  ['Precision', '97.9%', '96.1%'],
-  ['Recall', '97.7%', '94.8%'],
-  ['F1-Score', '97.8%', '95.4%'],
-  ['Loss', '0.068', '0.142'],
+const finalMetrics = [
+  { name: 'Accuracy', value: 94.95, bar: 94.95, display: (n) => `${n.toFixed(2)}%` },
+  { name: 'AUC', value: 0.9853, bar: 98.53, display: (n) => n.toFixed(4) },
+  { name: 'Precision', value: 0.9317, bar: 93.17, display: (n) => n.toFixed(4) },
+  { name: 'Recall', value: 0.9702, bar: 97.02, display: (n) => n.toFixed(4) },
+  { name: 'F1-Score', value: 0.9506, bar: 95.06, display: (n) => n.toFixed(4) },
+  { name: 'Val Loss', value: 0.1529, bar: 15.29, display: (n) => n.toFixed(4) },
+]
+
+const classRows = [
+  ['Parasitized', '0.97', '0.93', '0.95', '2,755'],
+  ['Uninfected', '0.93', '0.97', '0.95', '2,755'],
+  ['Macro Avg', '0.95', '0.95', '0.95', '5,510'],
+  ['Weighted Avg', '0.95', '0.95', '0.95', '5,510'],
+]
+
+const configRows = [
+  ['Input size', '128 x 128 RGB'],
+  ['Architecture', 'Conv2D blocks: 16, 32, 64, 128 filters'],
+  ['Regularization', 'Batch normalization, max pooling, dropout'],
+  ['Optimizer', 'Adam, learning rate 5e-4'],
+  ['Loss', 'Binary crossentropy'],
+  ['Training', '16 epochs with early stopping patience 5'],
+  ['Augmentation', 'Rotation, flip, zoom, shift, shear on training data only'],
+  ['Class weights', '{0: 1.0, 1: 1.0}'],
 ]
 
 export default function Results() {
   return (
     <section className="px-5 py-24 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <h1 className="text-4xl font-black text-slate-100 md:text-6xl">Training Results</h1>
-        <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-400">Full evaluation of the CNN model on the NIH malaria dataset.</p>
+        <p className="text-sm font-black uppercase tracking-[0.28em] text-cyan-400">Final notebook output</p>
+        <h1 className="mt-5 text-4xl font-black text-slate-100 md:text-6xl">Training Results</h1>
+        <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-400">
+          The values below are taken from the final executed cells in `final.ipynb`, evaluated on 5,510 validation images.
+        </p>
 
-        <Section title="Dataset Overview">
+        <Section title="Dataset">
           <div className="grid gap-5 md:grid-cols-3">
-            {datasetStats.map(([value, label]) => <MetricCard key={label} name={label} value={Number(value.replace(',', ''))} display={() => value} caption={label === 'Total Images' ? 'NIH cell image dataset used for binary training.' : 'Near-perfect class balance in the Kaggle release.'} />)}
-          </div>
-          <p className="mt-5 text-slate-400">Near-perfect class balance — class weights still applied during training.</p>
-        </Section>
-
-        <Section title="Training Configuration">
-          <div className="rounded-2xl border border-cyan-900/30 bg-navy-900 p-6 font-mono text-sm leading-8 text-slate-400 backdrop-blur">
-            <p><span className="text-cyan-400">Model</span>       : Sequential CNN (3 Conv Blocks)</p>
-            <p><span className="text-cyan-400">Input Shape</span> : (128, 128, 3)</p>
-            <p><span className="text-cyan-400">Optimizer</span>   : Adam (lr=1e-4)</p>
-            <p><span className="text-cyan-400">Loss</span>        : Binary Crossentropy</p>
-            <p><span className="text-cyan-400">Epochs</span>      : 20 (Early Stopping, patience=5)</p>
-            <p><span className="text-cyan-400">Batch Size</span>  : 16</p>
-            <p><span className="text-cyan-400">Augmentation</span>: rotation=15°, flip, zoom=10%, shift=10%</p>
-            <p><span className="text-cyan-400">Callbacks</span>   : EarlyStopping + ModelCheckpoint + ReduceLROnPlateau</p>
+            {datasetStats.map(([value, label, caption]) => (
+              <MetricCard key={label} name={label} value={Number(value.replace(',', ''))} display={() => value} caption={caption} />
+            ))}
           </div>
         </Section>
 
-        <Section title="Metrics Table">
-          <div className="overflow-hidden rounded-2xl border border-cyan-900/30 bg-navy-900 backdrop-blur">
-            <table className="w-full min-w-[640px] text-left">
+        <Section title="Model Configuration">
+          <div className="glass-card overflow-hidden rounded-2xl">
+            <table className="w-full min-w-[680px] text-left">
+              <tbody>
+                {configRows.map(([label, value], index) => (
+                  <tr key={label} className={index % 2 ? 'bg-navy-800/50' : 'bg-navy-900'}>
+                    <th className="w-56 p-4 text-cyan-400">{label}</th>
+                    <td className="p-4 text-slate-400">{value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+
+        <Section title="Validation Metrics">
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {finalMetrics.map((metric) => (
+              <MetricCard key={metric.name} {...metric} />
+            ))}
+          </div>
+        </Section>
+
+        <Section title="Classification Report">
+          <div className="glass-card overflow-hidden rounded-2xl">
+            <table className="w-full min-w-[680px] text-left">
               <thead className="bg-navy-800 text-cyan-400">
-                <tr><th className="p-4">Metric</th><th className="p-4">Train Set</th><th className="p-4">Val Set</th></tr>
+                <tr>
+                  <th className="p-4">Class</th>
+                  <th className="p-4">Precision</th>
+                  <th className="p-4">Recall</th>
+                  <th className="p-4">F1-Score</th>
+                  <th className="p-4">Support</th>
+                </tr>
               </thead>
               <tbody>
-                {rows.map((row, index) => (
-                  <tr key={row[0]} className={`${index % 2 ? 'bg-navy-800/60' : 'bg-navy-900'} transition hover:bg-navy-800`}>
+                {classRows.map((row, index) => (
+                  <tr key={row[0]} className={index % 2 ? 'bg-navy-800/50' : 'bg-navy-900'}>
                     {row.map((cell) => <td key={cell} className="p-4 text-slate-400">{cell}</td>)}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p className="mt-4 text-sm text-slate-400">Replace with actual values from the notebook once training is complete.</p>
-        </Section>
-
-        <Section title="Training Curves">
-          <ChartCard src="/training_curves.png" alt="Training and validation curves" caption="Model converged steadily — val_loss plateaued after ~14 epochs. (Charts generated from actual training run)" />
         </Section>
 
         <Section title="Confusion Matrix">
-          <ChartCard src="/confusion_matrix.png" alt="Validation confusion matrix" caption="TP (Infected, correctly caught): important — missed infections are dangerous." />
-          <p className="mt-4 text-infected">FN (Infected, missed): False Negatives are the critical failure mode in medical AI.</p>
+          <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+            <div className="glass-card rounded-2xl p-6">
+              <div className="grid grid-cols-[120px_repeat(2,minmax(0,1fr))] gap-3 text-center text-sm">
+                <div />
+                <Axis label="Predicted Parasitized" />
+                <Axis label="Predicted Uninfected" />
+                <Axis label="Actual Parasitized" />
+                <MatrixCell value="2,559" label="Correct parasitized" tone="good" />
+                <MatrixCell value="196" label="Missed as uninfected" tone="risk" />
+                <Axis label="Actual Uninfected" />
+                <MatrixCell value="82" label="Flagged as parasitized" tone="warn" />
+                <MatrixCell value="2,673" label="Correct uninfected" tone="good" />
+              </div>
+            </div>
+            <div className="glass-card rounded-2xl p-6 text-slate-400">
+              <h3 className="text-2xl font-black text-slate-100">Error Reading</h3>
+              <p className="mt-4 leading-7">
+                The notebook class order is `Parasitized: 0` and `Uninfected: 1`. The backend now uses that mapping, so sigmoid values above 0.5 are treated as uninfected probability.
+              </p>
+              <p className="mt-4 leading-7">
+                The validation set had 278 total mistakes: 196 parasitized cells predicted as uninfected and 82 uninfected cells predicted as parasitized.
+              </p>
+            </div>
+          </div>
         </Section>
 
-        <Section title="ROC Curve">
-          <ChartCard src="/roc_curve.png" alt="ROC curve" caption="AUC of 0.987 — near-perfect discrimination between classes." />
-        </Section>
-
-        <Section title="Model Interpretability — Grad-CAM++">
-          <ChartCard src="/gradcam_output.png" alt="Grad-CAM gallery" caption="Green title = correct prediction | Red title = misclassification." />
-        </Section>
-
-        <Section title="Limitations & Future Work">
+        <Section title="Limitations">
           <div className="grid gap-6 lg:grid-cols-3">
-            <InfoCard title="Limitations" items={['Trained only on NIH dataset, so staining differences may reduce generalization.', '128×128 resolution may miss fine-grained parasite details.', 'Binary classification only — species identification is not included.']} />
-            <InfoCard title="Future Improvements" items={['Transfer learning with EfficientNetB0 or ResNet50.', 'Multi-class detection for Plasmodium vivax vs falciparum.', 'Mobile app deployment for field screening workflows.']} />
-            <InfoCard title="Real-World Deployment" items={['Integrate with microscopy hardware APIs.', 'Use HIPAA-compliant storage and audit logging.', 'Tune confidence thresholds for clinical review protocols.']} />
+            <InfoCard title="Dataset Scope" items={['Trained on the NIH malaria cell image dataset only.', 'Stain, scanner, and lab differences can affect generalization.']} />
+            <InfoCard title="Prediction Scope" items={['Binary classification only: parasitized vs uninfected.', 'Species identification and parasite stage detection are not included.']} />
+            <InfoCard title="Use Boundary" items={['Educational AI project, not a clinical diagnostic device.', 'Low confidence or unclear images should be reviewed manually.']} />
           </div>
         </Section>
       </div>
@@ -91,35 +137,39 @@ export default function Results() {
 }
 
 function Section({ title, children }) {
-  return <section className="py-24"><h2 className="text-4xl font-black text-slate-100">{title}</h2><div className="mt-8">{children}</div></section>
+  return (
+    <section className="py-20">
+      <h2 className="text-3xl font-black text-slate-100 md:text-4xl">{title}</h2>
+      <div className="mt-8">{children}</div>
+    </section>
+  )
 }
 
-function ChartCard({ src, alt, caption }) {
-  const [missing, setMissing] = useState(false)
+function Axis({ label }) {
+  return <div className="flex min-h-[72px] items-center justify-center rounded-xl border border-cyan-900/30 bg-navy-950 p-3 font-bold text-cyan-400">{label}</div>
+}
+
+function MatrixCell({ value, label, tone }) {
+  const tones = {
+    good: 'border-healthy/50 text-healthy',
+    warn: 'border-cyan-400/50 text-cyan-400',
+    risk: 'border-infected/50 text-infected',
+  }
 
   return (
-    <figure className="rounded-2xl border border-cyan-900/30 bg-navy-900 p-6 backdrop-blur">
-      {missing ? (
-        <div className="flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-cyan-900/30 bg-navy-950 p-8 text-center">
-          <p className="text-xl font-black text-cyan-400">{alt}</p>
-          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-400">
-            Run the notebook export cell that saves {src.replace('/', '')}, then place that PNG in the frontend public folder so this report card renders the generated chart.
-          </p>
-        </div>
-      ) : (
-        <img src={src} alt={alt} onError={() => setMissing(true)} className="w-full rounded-xl border border-cyan-900/30 bg-navy-950 object-contain" />
-      )}
-      <figcaption className="mt-4 text-sm leading-6 text-slate-400">{caption}</figcaption>
-    </figure>
+    <div className={`min-h-[120px] rounded-xl border bg-navy-950 p-4 ${tones[tone]}`}>
+      <div className="text-3xl font-black">{value}</div>
+      <p className="mt-2 text-xs font-bold uppercase tracking-widest text-slate-400">{label}</p>
+    </div>
   )
 }
 
 function InfoCard({ title, items }) {
   return (
-    <article className="rounded-2xl border border-cyan-900/30 bg-navy-900 p-6 backdrop-blur">
+    <article className="glass-card rounded-2xl p-6">
       <h3 className="text-2xl font-black text-cyan-400">{title}</h3>
       <ul className="mt-5 space-y-3 text-sm leading-6 text-slate-400">
-        {items.map((item) => <li key={item}>• {item}</li>)}
+        {items.map((item) => <li key={item}>- {item}</li>)}
       </ul>
     </article>
   )

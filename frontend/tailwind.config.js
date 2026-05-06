@@ -4,8 +4,8 @@ module.exports = {
     extend: {
       fontFamily: { hanken: ["'Hanken Grotesque'", "sans-serif"] },
       colors: {
-        navy: { 950: '#050d1a', 900: '#0a1628', 800: '#0d1f3c' },
-        cyan: { 400: '#38bdf8', 500: '#0ea5e9', 900: '#164e63' },
+        navy: { 950: '#050807', 900: '#0b1513', 800: '#13211f' },
+        cyan: { 400: '#5eead4', 500: '#14b8a6', 900: '#134e4a' },
         blue: { 600: '#2563eb', 800: '#1e40af' },
         slate: { 100: '#f0f4ff', 400: '#7b91b0' },
         infected: '#ef4444',
@@ -24,8 +24,8 @@ module.exports = {
           '50%': { transform: 'translateY(-20px)' },
         },
         pulseGlow: {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(56,189,248,0.3)' },
-          '50%': { boxShadow: '0 0 40px rgba(56,189,248,0.7)' },
+          '0%, 100%': { boxShadow: '0 0 20px rgba(94,234,212,0.28)' },
+          '50%': { boxShadow: '0 0 40px rgba(94,234,212,0.58)' },
         },
         countUp: {
           '0%': { opacity: '0', transform: 'translateY(8px)' },

@@ -1,6 +1,7 @@
 dataset/
 node_modules/
 .history/
+.codex-temp/
 env/
 venv/
 backend/env/
