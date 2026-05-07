@@ -94,12 +94,13 @@ GEMINI_TIMEOUT = float(read_setting("GEMINI_TIMEOUT", "4"))
 model = None
 gradcam_model = None
 lite_model = None
+model_error = None
 
 
 @app.on_event("startup")
 def load_model():
-    global model, gradcam_model, lite_model
-    
+    global model, gradcam_model, lite_model, model_error
+
     # Search for the model in multiple common locations
     possible_paths = [
         MODEL_PATH,
@@ -107,19 +108,21 @@ def load_model():
         os.path.join(os.path.dirname(BASE_DIR), "best_model.h5"),
         os.path.join(os.path.dirname(BASE_DIR), "best_model.keras"),
     ]
-    
+
     found_path = None
     for path in possible_paths:
         if os.path.exists(path):
             found_path = path
             break
-            
+
     if not found_path:
-        print(f"Warning: Model not found in any of {possible_paths}")
+        model_error = f"Model file not found. Searched: {possible_paths}"
+        print(f"Warning: {model_error}")
         return
 
-    try:
-        if tf is not None and not os.getenv("VERCEL"):
+    # Try TensorFlow full model first (works locally and on non-serverless)
+    if tf is not None:
+        try:
             print(f"Loading TensorFlow model from {found_path}...")
             model = tf.keras.models.load_model(found_path, compile=False)
             conv_layers = [layer.name for layer in model.layers if isinstance(layer, tf.keras.layers.Conv2D)]
@@ -132,12 +135,20 @@ def load_model():
             model(tf.convert_to_tensor(dummy), training=False)
             print("TensorFlow model loaded successfully.")
             return
+        except Exception as tf_err:
+            print(f"TensorFlow load failed ({tf_err}), falling back to lite model...")
+            model = None
+            gradcam_model = None
 
+    # Fallback: lightweight NumPy-only inference (used on Vercel serverless)
+    try:
         print(f"Loading Lite model from {found_path}...")
         lite_model = LiteMalariaModel(found_path)
         print("Lite model loaded successfully.")
-    except Exception as e:
-        print(f"Error loading model from {found_path}: {e}")
+        model_error = None
+    except Exception as lite_err:
+        model_error = f"Lite model load failed: {lite_err}"
+        print(f"Error: {model_error}")
 
 
 
@@ -367,10 +378,12 @@ def home():
 
 @app.get("/health")
 def health():
+    loaded = model is not None or lite_model is not None
     return {
         "status": "ok",
-        "model_loaded": model is not None or lite_model is not None,
+        "model_loaded": loaded,
         "runtime": "tensorflow" if model is not None else "lite" if lite_model is not None else "none",
+        "model_error": model_error if not loaded else None,
         "gemini_enabled": bool(GEMINI_API_KEY),
         "gemini_model": GEMINI_MODEL if GEMINI_API_KEY else None,
     }
