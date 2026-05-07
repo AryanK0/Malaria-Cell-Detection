@@ -13,4 +13,6 @@ __pycache__
 .env
 backend/.env
 final.ipynb
-best_model.h5
+# best_model.h5 is required for Vercel deployment, do not ignore
+# best_model.h5
+
