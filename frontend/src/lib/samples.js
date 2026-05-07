@@ -1,7 +1,12 @@
 const localHosts = new Set(['localhost', '127.0.0.1'])
 const isLocalHost = localHosts.has(window.location.hostname)
 
-export const API_BASE = import.meta.env.VITE_API_BASE_URL || (isLocalHost ? `http://${window.location.hostname || '127.0.0.1'}:5000` : '/api')
+export const API_BASE = import.meta.env.VITE_API_BASE_URL || (
+  window.location.port === '5173' 
+    ? `http://${window.location.hostname}:8000/api` // Guessing 8000 as default FastAPI port
+    : '/api'
+)
+
 
 export const fallbackSamples = [
   { name: 'Parasitized 1', src: '/samples/para_1.png', expected: 'Parasitized' },

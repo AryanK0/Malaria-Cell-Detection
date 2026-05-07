@@ -99,22 +99,46 @@ lite_model = None
 @app.on_event("startup")
 def load_model():
     global model, gradcam_model, lite_model
-    if not os.path.exists(MODEL_PATH):
+    
+    # Search for the model in multiple common locations
+    possible_paths = [
+        MODEL_PATH,
+        os.path.join(BASE_DIR, "model", "best_model.keras"),
+        os.path.join(os.path.dirname(BASE_DIR), "best_model.h5"),
+        os.path.join(os.path.dirname(BASE_DIR), "best_model.keras"),
+    ]
+    
+    found_path = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            found_path = path
+            break
+            
+    if not found_path:
+        print(f"Warning: Model not found in any of {possible_paths}")
         return
 
-    if tf is not None and not os.getenv("VERCEL"):
-        model = tf.keras.models.load_model(MODEL_PATH, compile=False)
-        conv_layers = [layer.name for layer in model.layers if isinstance(layer, tf.keras.layers.Conv2D)]
-        if conv_layers:
-            gradcam_model = tf.keras.models.Model(
-                inputs=model.inputs,
-                outputs=[model.get_layer(conv_layers[-1]).output, model.outputs[0]],
-            )
-        dummy = np.zeros((1, IMG_SIZE[1], IMG_SIZE[0], 3), dtype=np.float32)
-        model(tf.convert_to_tensor(dummy), training=False)
-        return
+    try:
+        if tf is not None and not os.getenv("VERCEL"):
+            print(f"Loading TensorFlow model from {found_path}...")
+            model = tf.keras.models.load_model(found_path, compile=False)
+            conv_layers = [layer.name for layer in model.layers if isinstance(layer, tf.keras.layers.Conv2D)]
+            if conv_layers:
+                gradcam_model = tf.keras.models.Model(
+                    inputs=model.inputs,
+                    outputs=[model.get_layer(conv_layers[-1]).output, model.outputs[0]],
+                )
+            dummy = np.zeros((1, IMG_SIZE[1], IMG_SIZE[0], 3), dtype=np.float32)
+            model(tf.convert_to_tensor(dummy), training=False)
+            print("TensorFlow model loaded successfully.")
+            return
 
-    lite_model = LiteMalariaModel(MODEL_PATH)
+        print(f"Loading Lite model from {found_path}...")
+        lite_model = LiteMalariaModel(found_path)
+        print("Lite model loaded successfully.")
+    except Exception as e:
+        print(f"Error loading model from {found_path}: {e}")
+
 
 
 def encode_png(image_array):
